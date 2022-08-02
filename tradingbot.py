@@ -1,18 +1,19 @@
 import alpaca_trade_api as tradeapi
 import numpy as np
+from alpaca_trade_api.rest import TimeFrame
 import time
 
-SEC_KEY = 'bxx9mpoKcoGZDnkm2QTNOY1TGIb5erhcbKFtVM3m'
+SEC_KEY = ''
 PUB_KEY = 'PKNRULROQYCRTMK9O9BD'
 BASE_URL = 'https://paper-api.alpaca.markets'
 api = tradeapi.REST(key_id=PUB_KEY, secret_key=SEC_KEY, base_url=BASE_URL)
 
 def get_data():
     # Returns a an numpy array of the closing prices of the past 5 minutes
-    market_data = api.get_bars(symb, 'minute', limit=5)
+    market_data = api.get_bars(symb, TimeFrame.Minute, limit=5)
     
     close_list = []
-    for bar in market_data[symb]:
+    for bar in market_data:
         close_list.append(bar.c)
     
     close_list = np.array(close_list, dtype=np.float64)
@@ -37,7 +38,7 @@ def sell(qty, symbol):
         time_in_force='gtc'
     )
 
-symb = ""
+symb = "SPY"
 pos_held = False
 
 while True:
