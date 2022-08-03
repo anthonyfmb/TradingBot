@@ -1,18 +1,18 @@
 import alpaca_trade_api as tradeapi
 import numpy as np
-import time
 import datetime as dt
 import pytz
+import time
+import argparse
 from alpaca_trade_api.rest import TimeFrame
 
 '''
     This is a trading script that you can run in the cloud and customize with your own trading algorithms
     The example uses the Alpaca Trading API, which is a free algorithmic trading platform that allows for paper trading
-    You can setup a free account on Alpaca here: https://alpaca.markets/
-    Alternatively, edit the getMarketData, Buy, and Sell functions to connect your own APIS
+    This project was built from LiorB-D's TradingBot
 '''
 
-SEC_KEY = ''
+SEC_KEY = 'aJCw3NWCqNBhTCyaAtAmG5bz9ybt9w5GbRevZkz3'
 PUB_KEY = 'PKWWDFXGUAI923FPFH4C'
 BASE_URL = 'https://paper-api.alpaca.markets'
 api = tradeapi.REST(key_id= PUB_KEY, secret_key=SEC_KEY, base_url=BASE_URL)
@@ -50,8 +50,17 @@ def sell(q, s): # Returns nothing, makes call to sell stock
         time_in_force='gtc'
     )
 
-symb = "SPY" # Ticker of stock you want to trade
+symb = ""
+quantity = 0
 pos_held = False
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('-q', '--quantity', type=int, required=True, help='Specifies the amount of stocks that can be traded')
+parser.add_argument('-s', '--symbols', type=str, required=True, help='Specifies the stocks to be traded')
+
+args = parser.parse_args()
+symb = args.symbol
+quantity = args.quantity
 
 while True:
     print("")
@@ -67,12 +76,12 @@ while True:
 
     if ma + 0.1 < last_price and not pos_held: # Buy when moving average is ten cents below the last price
         print("Buy")
-        buy(1, symb)
+        buy(quantity, symb)
         pos_held = True
     
     elif ma - 0.1 > last_price and pos_held: # Sell when moving average is ten cents above the last price
         print("Sell")
-        sell(1, symb)
+        sell(quantity, symb)
         pos_held = False
     
     time.sleep(60)
