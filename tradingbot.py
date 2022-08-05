@@ -12,7 +12,7 @@ from alpaca_trade_api.rest import TimeFrame
     This project was built from LiorB-D's TradingBot
 '''
 
-SEC_KEY = 'aJCw3NWCqNBhTCyaAtAmG5bz9ybt9w5GbRevZkz3'
+SEC_KEY = ''
 PUB_KEY = 'PKWWDFXGUAI923FPFH4C'
 BASE_URL = 'https://paper-api.alpaca.markets'
 api = tradeapi.REST(key_id= PUB_KEY, secret_key=SEC_KEY, base_url=BASE_URL)
