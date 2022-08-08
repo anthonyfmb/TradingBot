@@ -65,12 +65,15 @@ def sell(q, s):
 
 symbols = []
 pos_held = {}
+quantity = 1
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-q', '--quantity', type=int, required=False, help='Specifies the amount of stocks that can be traded')
 parser.add_argument('-s', '--symbols', nargs='+', type=str, required=True, help='Specifies the stocks to be traded (max 5)')
 
 args = parser.parse_args()
+if (args.quantity):
+    quantity = args.quantity
 symbols = args.symbols
 
 for symb in symbols:
@@ -90,12 +93,12 @@ while True:
 
         if twenty > hundred and not pos_held[symb]:
             print("Buy")
-            buy(1, symb)
+            buy(quantity, symb)
             pos_held[symb] = True
         
         elif twenty < hundred and pos_held[symb]:
             print("Sell")
-            sell(1, symb)
+            sell(quantity, symb)
             pos_held[symb] = False
     
     # Wait half a day
