@@ -6,34 +6,47 @@ import time
 import argparse
 from alpaca_trade_api.rest import TimeFrame
 
-'''
-    This is a trading script that you can run in the cloud and customize with your own trading algorithms
-    The example uses the Alpaca Trading API, which is a free algorithmic trading platform that allows for paper trading
-    This project was built from LiorB-D's TradingBot
-'''
-
 SEC_KEY = ''
 PUB_KEY = 'PKWWDFXGUAI923FPFH4C'
 BASE_URL = 'https://paper-api.alpaca.markets'
 api = tradeapi.REST(key_id= PUB_KEY, secret_key=SEC_KEY, base_url=BASE_URL)
 
-
-def get_data():
+# Returns 20 day moving average
+def get_20_day(symb):
     now = dt.datetime.now(pytz.timezone('UTC'))
-    fifteenMinPrior = (now - dt.timedelta(minutes=15)).isoformat()
-    twentyMinPrior = (now - dt.timedelta(hours=1)).isoformat()
 
-    market_data = api.get_bars(symb, TimeFrame.Minute, start=twentyMinPrior, end=fifteenMinPrior, limit=5)
+    # Free version of Alpaca doesn't allow receiving data from the last 15 minutes, so our end time will be 15 minutes ago
+    fifteenMinPrior = (now - dt.timedelta(minutes=15)).isoformat() 
+    fiftyDaysPrior = (now - dt.timedelta(days=50)).isoformat()
+
+    market_data = api.get_bars(symb, TimeFrame.Minute, start=fiftyDaysPrior, end=fifteenMinPrior)
     
     close_list = []
     for bar in market_data:
         close_list.append(bar.c)
     
-    close_list = np.array(close_list, dtype=np.float64)
+    ma = np.mean(np.array(close_list, dtype=np.float64))
 
-    return close_list
+    return ma
 
-def buy(q, s): # Returns nothing, makes call to buy stock
+# Gets 100 day moving average
+def get_100_day(symb):
+    now = dt.datetime.now(pytz.timezone('UTC'))
+
+    fifteenMinPrior = (now - dt.timedelta(minutes=15)).isoformat()
+    twoHundredDaysPrior = (now - dt.timedelta(days=200)).isoformat()
+
+    market_data = api.get_bars(symb, TimeFrame.Minute, start=twoHundredDaysPrior, end=fifteenMinPrior)
+    
+    close_list = []
+    for bar in market_data:
+        close_list.append(bar.c)
+    
+    ma = np.mean(np.array(close_list, dtype=np.float64))
+
+    return ma
+
+def buy(q, s): 
     api.submit_order(
         symbol=s,
         qty=q,
@@ -41,7 +54,7 @@ def buy(q, s): # Returns nothing, makes call to buy stock
         type='market',
         time_in_force='gtc'
     )
-def sell(q, s): # Returns nothing, makes call to sell stock
+def sell(q, s):
     api.submit_order(
         symbol=s,
         qty=q,
@@ -50,38 +63,38 @@ def sell(q, s): # Returns nothing, makes call to sell stock
         time_in_force='gtc'
     )
 
-symb = ""
+symbols = []
 quantity = 0
 pos_held = False
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('-q', '--quantity', type=int, required=True, help='Specifies the amount of stocks that can be traded')
-parser.add_argument('-s', '--symbols', type=str, required=True, help='Specifies the stocks to be traded')
+parser.add_argument('-s', '--symbols', nargs='+', type=str, required=True, help='Specifies the stocks to be traded (max 5)')
 
 args = parser.parse_args()
-symb = args.symbol
+symbols = args.symbols
 quantity = args.quantity
 
 while True:
-    print("")
-    print("Checking Price")
-    
-    close_list = get_data()
 
-    ma = np.mean(close_list)
-    last_price = close_list[4]
+    for symb in symbols:
+        print("")
+        print(symb + ": ")
+        
+        twenty = get_20_day(symb)
+        hundred = get_100_day(symb)
 
-    print("Moving Average: " + str(ma))
-    print("Last Price: " + str(last_price))
+        print("20 Day Moving Average: " + str(twenty))
+        print("100 Day Moving Average: " + str(hundred))
 
-    if ma + 0.1 < last_price and not pos_held: # Buy when moving average is ten cents below the last price
-        print("Buy")
-        buy(quantity, symb)
-        pos_held = True
-    
-    elif ma - 0.1 > last_price and pos_held: # Sell when moving average is ten cents above the last price
-        print("Sell")
-        sell(quantity, symb)
-        pos_held = False
-    
+        if twenty > hundred and not pos_held:
+            print("Buy")
+            buy(quantity, symb)
+            pos_held = True
+        
+        elif twenty < hundred and pos_held:
+            print("Sell")
+            sell(quantity, symb)
+            pos_held = False
+        
     time.sleep(60)
