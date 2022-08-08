@@ -19,7 +19,7 @@ def get_20_day(symb):
     fifteenMinPrior = (now - dt.timedelta(minutes=15)).isoformat() 
     fiftyDaysPrior = (now - dt.timedelta(days=50)).isoformat()
 
-    market_data = api.get_bars(symb, TimeFrame.Minute, start=fiftyDaysPrior, end=fifteenMinPrior)
+    market_data = api.get_bars(symb, TimeFrame.Minute, start=fiftyDaysPrior, end=fifteenMinPrior, limit=20)
     
     close_list = []
     for bar in market_data:
@@ -64,16 +64,17 @@ def sell(q, s):
     )
 
 symbols = []
-quantity = 0
-pos_held = False
+pos_held = {}
 
 parser = argparse.ArgumentParser(description='')
-parser.add_argument('-q', '--quantity', type=int, required=True, help='Specifies the amount of stocks that can be traded')
+parser.add_argument('-q', '--quantity', type=int, required=False, help='Specifies the amount of stocks that can be traded')
 parser.add_argument('-s', '--symbols', nargs='+', type=str, required=True, help='Specifies the stocks to be traded (max 5)')
 
 args = parser.parse_args()
 symbols = args.symbols
-quantity = args.quantity
+
+for symb in symbols:
+    pos_held[symb] = False
 
 while True:
 
@@ -87,14 +88,15 @@ while True:
         print("20 Day Moving Average: " + str(twenty))
         print("100 Day Moving Average: " + str(hundred))
 
-        if twenty > hundred and not pos_held:
+        if twenty > hundred and not pos_held[symb]:
             print("Buy")
-            buy(quantity, symb)
-            pos_held = True
+            buy(1, symb)
+            pos_held[symb] = True
         
-        elif twenty < hundred and pos_held:
+        elif twenty < hundred and pos_held[symb]:
             print("Sell")
-            sell(quantity, symb)
-            pos_held = False
-        
-    time.sleep(60)
+            sell(1, symb)
+            pos_held[symb] = False
+    
+    # Wait half a day
+    time.sleep(43200)
