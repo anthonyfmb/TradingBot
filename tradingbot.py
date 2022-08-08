@@ -4,6 +4,7 @@ import datetime as dt
 import pytz
 import time
 import argparse
+import sys
 from alpaca_trade_api.rest import TimeFrame
 
 SEC_KEY = ''
@@ -77,7 +78,16 @@ if (args.quantity):
 symbols = args.symbols
 
 for symb in symbols:
-    pos_held[symb] = False
+    try: 
+        position = api.get_position(symb)
+        if (position.qty == 0):
+            pos_held[symb] = False
+        else:
+            pos_held[symb] = True
+    except:
+        print("[!] Ensure all symbols are valid")
+        print("[!] Quitting...")
+        sys.exit(0)
 
 while True:
 
